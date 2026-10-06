@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kytara – trenér akordů a strummingu</title>
+<meta name="theme-color" content="#14161a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kytara">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon-180.jpeg">
+<meta name="mobile-web-app-capable" content="yes">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2?v=20261006"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>🎸 Kytara – trenér</h1>
+  <div class="row">
+    <button id="cloudBtn">☁ Přihlásit</button>
+    <span id="cloudState" class="small">offline režim</span>
+    <button id="micBtn">🎤 Zapnout mikrofon</button>
+    <div class="meter" title="Úroveň signálu"><i id="lvl"></i></div>
+    <span id="micState" class="small">mikrofon vypnut</span>
+  </div>
+</header>
+<div style="max-width:1100px;margin:auto;padding:0 18px">
+  <div class="card" id="authBox">
+    <div class="row">
+      <input id="aMail" type="email" placeholder="e-mail" autocomplete="username">
+      <input id="aPass" type="password" placeholder="heslo (min. 8 znaků)" autocomplete="current-password">
+      <input id="aName" placeholder="jméno profilu" value="Jakub" size="10">
+      <button id="aLogin">Přihlásit</button>
+      <button id="aSignup">Registrovat</button>
+    </div>
+    <div id="aMsg" class="small" style="margin-top:6px">Registrace vytvoří profil s uvedeným jménem. Projekt může vyžadovat potvrzení e-mailu.</div>
+  </div>
+</div>
+<nav id="tabs">
+  <button data-t="lib" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Domů</span></button>
+  <button data-t="check"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg><span>Akordy</span></button>
+  <button data-t="strum"><svg viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 8-12h-6z"/></svg><span>Rytmus</span></button>
+  <button data-t="lessons"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Lekce</span></button>
+  <button data-t="stats"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg><span>Statistiky</span></button>
+</nav>
+<main>
+<section id="lib" class="on">
+  <div class="home-hero card"><div class="home-hero-icon">🎸</div><div style="flex:1;min-width:220px"><h2 style="margin:0 0 4px">Vítej v Kytara – trenér</h2><div class="mut">Rychlý přehled tvého pokroku a poslední aktivity.</div></div></div>
+  <div id="homeSummary" class="home-summary"></div>
+  <div class="card home-next" id="homeNextLesson"></div>
+</section>
+<section id="check">
+  <div class="card lib-feature"><button id="libDetails" class="ch-details">Detaily</button><div class="row">
+    <div id="libBig"></div><div><div class="big" id="libName"></div><div id="libInfo" class="mut"></div>
+    <div class="row" style="margin-top:10px"><button id="libPlay">▶ Přehrát nahrávku</button><button id="libSynth">▶ Syntetický zvuk</button></div>
+    <div id="libRec" class="small" style="margin-top:6px"></div>
+    <div class="row" style="margin-top:10px"><button id="recUp" class="cloudOnly">⬆ Nahrát soubor</button><input type="file" id="recFile" accept="audio/*" style="display:none"><button id="recMic" class="cloudOnly">⏺ Nahrát 3 s z mikrofonu</button><button id="recDel" class="cloudOnly">🗑 Smazat mou nahrávku</button></div>
+    <div id="recMsg" class="small" style="margin-top:6px">Vlastní nahrávky se ukládají jen po přihlášení.</div></div>
+  </div></div>
+  <div class="grid" id="libGrid"></div><p class="small">Struny zleva doprava: E A D G H e. Číslo v puntíku = prst (1 ukazováček … 4 malíček). ○ prázdná struna, ✕ nehrát.</p>
+</section>
+<section id="strum">
+  <div class="card">
+    <div class="row">
+      <label>Vzor <select id="patSel"></select></label>
+      <label>Tempo <input type="range" id="bpm" min="40" max="200" value="80"> <b id="bpmV">80</b> BPM</label>
+      <label>Akordy (postup) <input id="prog" value="Am C G D" size="14"></label>
+      <label>Taktů na akord <select id="bars"><option>1</option><option>2</option><option>4</option></select></label>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label><input type="checkbox" id="clickOn" checked> metronom</label>
+      <label><input type="checkbox" id="strumOn" checked> přehrávat ukázku úderů</label>
+      <label><input type="checkbox" id="micTiming"> hodnotit můj rytmus mikrofonem (použij sluchátka!)</label>
+    </div>
+    <div class="row" style="margin-top:10px"><button id="playBtn" class="on">▶ Start</button><span id="patDesc" class="small"></span></div>
+  </div>
+  <div class="card row">
+    <div><div class="small">Teď hraj</div><div id="curBig"></div></div>
+    <div style="flex:1;min-width:300px">
+      <div class="steps" id="steps"></div>
+      <div id="timing" class="verdict mut">Hodnocení rytmu: zapni mikrofon a volbu „hodnotit můj rytmus“.</div>
+      <div class="small" id="timingStats"></div>
+    </div>
+    <div><div class="small">Následuje</div><div id="nextBig" style="transform:scale(.7);transform-origin:top left;height:110px"></div></div>
+  </div>
+  <p class="small">↓ = úder dolů, ↑ = úder nahoru, – = ruka se pohybuje, ale struny se netrefují. Po zastavení se uloží statistika rytmu (jen při přihlášení a zapnutém hodnocení).</p>
+</section>
+
+<section id="stats">
+  <div class="card">
+    <div class="row"><b id="stHello">Statistiky</b><button id="stRefresh">↻ Obnovit</button></div>
+    <div id="stBody" class="small" style="margin-top:10px">Přihlas se, aby se statistiky ukládaly a zobrazovaly.</div>
+  </div>
+</section>
+<section id="lessons"><div id="lkRoot"></div></section></main>
+<div id="chordDetailsModal" class="chord-modal" aria-hidden="true"><div class="chord-modal-card" role="dialog" aria-modal="true" aria-labelledby="chordDetailsTitle"><div class="chord-modal-head"><div><div class="small">Detail akordu</div><h2 id="chordDetailsTitle" style="margin:0">Akord</h2></div><button id="chordDetailsClose" class="chord-modal-close" aria-label="Zavřít">✕</button></div><div id="chordDetailsBody"><div class="card">
+    <div class="row">
+      <div id="chkBig"></div>
+      <div style="flex:1;min-width:260px">
+        <div class="row">
+          <label>Cílový akord <select id="chkSel"></select></label>
+          <button id="chkListen">🔊 Poslechnout</button>
+          <button id="chkRand">🎲 Náhodný</button>
+          <label><input type="checkbox" id="chkAuto"> automaticky další po správném zahrání</label>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="chkCal">🎙 Naučit z mého hraní</button>
+          <button id="chkReset">↺ Smazat mé kalibrace</button>
+          <span class="small" id="calInfo"></span>
+        </div>
+        <div class="verdict" id="chkVerdict">Zapni mikrofon a zahraj akord (všechny struny naráz, nechej znít).</div>
+        <div class="row">Rozpoznáno: <b id="chkDet">–</b> &nbsp; Shoda: <b id="chkSim">–</b> &nbsp; Série: <b id="chkStreak">0</b> &nbsp; Správně: <b id="chkOk">0</b></div>
+        <div class="pcs" id="chkPcs" style="margin-top:10px"></div>
+        <p class="small">Oranžový rámeček = tón, který v akordu musí zaznít. Zelený = slyším. Červený = tón navíc.</p>
+      </div>
+    </div>
+  </div>
+  <div class="card small">
+    <b>Vyhodnocení:</b> chromagram z mikrofonu se porovnává se šablonou akordu (50 % teorie, 50 % reálná nahrávka). „Naučit z mého hraní“ šablonu přepíše tvým vlastním správným zahráním; po přihlášení se profil ukládá do cloudu.<br>
+    <b>Omezení:</b> analyzují se výšky tónů, ne jednotlivé struny. Kytara musí být naladěná. Do statistik se ukládají jen úspěšně zahrané akordy, neúspěšné pokusy ne.
+  </div></div></div></div>
+<script src="app.js"></script>
+</body>
+</html>
